@@ -1,0 +1,17 @@
+import requests
+from flight_search import FlightSearch
+from data_manager import DataManager
+manage = DataManager()
+manage.price_comparison()
+manage.iata()
+sheety_requests = requests.get(url='https://api.sheety.co/6f75a066386ffc58dedcda40f7402ead/copyOfFlightDeals/prices')
+print(sheety_requests.json()['prices'])
+for item in sheety_requests.json()['prices']:
+    if item['iataCode'] == '':
+        flight = FlightSearch(item['city'])
+        print(flight.iata_code())
+        header = {'apikey': '2ZOdz3Z5t8pcFJ0jx4G4pzKBFajcrSoH'}
+        parameter = {'location_types': 'city', 'term': item['city']}
+        city_request = requests.get(url='https://tequila-api.kiwi.com/locations/query', params=parameter, headers=header)
+        print(city_request.json()['locations'][0]['code'])
+    print(item)
