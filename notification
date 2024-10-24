@@ -1,0 +1,27 @@
+from twilio.rest import Client
+import smtplib, requests
+class NotificationManager:
+    #This class is responsible for sending notifications with the deal flight details.
+    def __init__(self, mess):
+        self.account_sid = 'ID'
+        self.auth_token = 'AUTH'
+        self.m = mess
+    def message(self):
+        client = Client(self.account_sid, self.auth_token)
+
+        message = client.messages \
+            .create(
+            body=self.m,
+            from_='+16813219871',
+            to='+91 74588 80698	'
+        )
+        print(message.status)
+
+    def send_emails(self):
+        with smtplib.SMTP("smtp.gmail.com", port=587) as connections:
+            connections.starttls()
+            connections.login(user="manyasah.lko@gmail.com", password="czjmcfgdjoncyiuc")
+            emails = requests.get(url='https://api.sheety.co/6f75a066386ffc58dedcda40f7402ead/copyOfFlightDeals/users')
+            for mails in emails.json()['users']:
+
+                connections.sendmail(from_addr='manyasah.lko@gmail.com', to_addrs=mails['email'], msg=self.m)
