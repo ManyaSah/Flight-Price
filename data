@@ -1,0 +1,30 @@
+import requests
+from flight_search import FlightSearch
+
+class DataManager:
+    #This class is responsible for talking to the Google Sheet.
+    def __init__(self):
+        self.sheety_requests = requests.get(url='https://api.sheety.co/6f75a066386ffc58dedcda40f7402ead/copyOfFlightDeals/prices')
+        self.edit_params = {}
+        self.sheety = {}
+
+    def iata(self):
+        for item in self.sheety_requests.json()['prices']:
+            if item['iataCode'] == '':
+                flight = FlightSearch(item['city'])
+                print(flight.iata_code())
+                self.edit_params = {'price':
+                                        {
+                                            'iataCode': flight.iata_code()
+                                        }
+                }
+                self.sheety = requests.put(url=f'https://api.sheety.co/6f75a066386ffc58dedcda40f7402ead/copyOfFlightDeals/prices/{item["id"]}', json=self.edit_params)
+    def price_comparison(self):
+        for it in self.sheety_requests.json()['prices']:
+            lowest_price = it['lowestPrice']
+            code = it['iataCode']
+            flight_check = FlightSearch(it['city'], lowest_price, code)
+        #     flight_check = FlightSearch('X', 'Y', 'Z')
+            flight_check.cheap_flights()
+
+
