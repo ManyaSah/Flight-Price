@@ -1,0 +1,69 @@
+import requests
+from datetime import timedelta
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from notification_manager import NotificationManager
+API_KEY = '2ZOdz3Z5t8pcFJ0jx4G4pzKBFajcrSoH'
+TOMMO_DATE = (datetime.today() + timedelta(days=1)).strftime('%d/%m/%Y')
+
+class FlightSearch:
+
+#This class is responsible for talking to the Flight Search API.
+    def __init__(self, city, lowest, icode):
+        self.parameter = {}
+        self.city_request = None
+        self.city = city
+        self.header = {}
+        self.header_flights = {}
+        self.params = {}
+        self.flight_requests = {}
+        self.low = lowest
+        self.yaycode = icode
+
+    def iata_code(self):
+
+        self.header = {'apikey': '2ZOdz3Z5t8pcFJ0jx4G4pzKBFajcrSoH'}
+        self.parameter = {'location_types': 'city', 'term': self.city}
+        self.city_request = requests.get(url='https://tequila-api.kiwi.com/locations/query', params=self.parameter, headers=self.header)
+        return self.city_request.json()['locations'][0]['code']
+
+    def cheap_flights(self):
+        self.header_flights = {'apikey': API_KEY}
+        self.params = {'fly_from': 'STN', 'fly_to': {self.yaycode}, 'date_from': TOMMO_DATE, 'date_to': ((datetime.today() + timedelta(days=1))+relativedelta(months=6)).strftime('%d/%m/%Y'), 'curr': 'GBP', 'flight_type': 'round', 'nights_in_dst_from': 7, 'nights_in_dst_to': 28, 'maxstopovers': 0}
+        # self.params = {'fly_from': 'STN', 'fly_to': 'DPS', 'date_from': TOMMO_DATE, 'date_to': ((datetime.today() + timedelta(days=1))+relativedelta(months=6)).strftime('%d/%m/%Y'), 'curr': 'GBP', 'flight_type': 'round', 'nights_in_dst_from': 7, 'nights_in_dst_to': 28, 'maxstopovers': 0}
+        self.flight_requests = requests.get(url='https://api.tequila.kiwi.com/v2/search', headers=self.header_flights, params=self.params)
+        # print(self.city)
+        if self.flight_requests.json()['data'] != []:
+            # print('present')
+            for t in self.flight_requests.json()['data']:
+                flight_price = t['price']
+                if flight_price < self.low:
+                # if flight_price < 92:
+                    print(t['route'][0]['local_departure'].split('T')[0])
+                date = t['route'][0]['local_departure'].split('T')[0]
+                message_body = f'Low price alert! Only £{flight_price} to fly from London-STN to {self.city}-{self.yaycode} on {date} '.encode('utf-8')
+                notifications = NotificationManager(message_body)
+                notifications.message()
+
+                notifications.send_emails()
+        else:
+            # print('not')
+            self.params1 = {'fly_from': 'STN', 'fly_to': 'DPS', 'date_from': TOMMO_DATE, 'date_to': ((datetime.today() + timedelta(days=1))+relativedelta(months=6)).strftime('%d/%m/%Y'), 'curr': 'GBP', 'flight_type': 'round', 'nights_in_dst_from': 7, 'nights_in_dst_to': 28, 'maxstopovers': 1}
+            self.flight_requests1 = requests.get(url='https://api.tequila.kiwi.com/v2/search',
+                                                headers=self.header_flights, params=self.params1)
+            # if self.flight_requests1.json()['data'] != []:
+            #
+            #     print('one stop')
+            for it in self.flight_requests1.json()['data']:
+                flight_price1 = it['price']
+                if flight_price1 < self.low:
+                # if flight_price < 92:
+                    print(it['route'][0]['local_departure'].split('T')[0])
+                date = it['route'][0]['local_departure'].split('T')[0]
+                message_body = f'Low price alert! Only £{flight_price1} to fly from London-STN to {self.city}-{self.yaycode} on {date} '
+                # message_body = ("flight")
+                notifications = NotificationManager(message_body)
+                notifications.message()
+
+                notifications.send_emails()
+        # print(self.flight_requests.json())
